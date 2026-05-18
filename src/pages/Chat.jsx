@@ -9,7 +9,7 @@ import {
 } from "@/store/slices/chatSlice";
 import { fetchCurrentUser } from "@/store/slices/userSlice";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, User, Send, LogOut, Loader2 } from "lucide-react";
+import { MessageCircle, User, Send, LogOut, Loader2, Menu, X } from "lucide-react";
 import { disconnectExchange } from "@/services/exchangeRequestsService";
 
 export default function Chat() {
@@ -20,6 +20,7 @@ export default function Chat() {
   const { currentUser } = useSelector((state) => state.user);
   const [draft, setDraft] = useState("");
   const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [mobileConvoOpen, setMobileConvoOpen] = useState(false);
 
   const activeConversation = conversations?.find(c => c.id === activeConversationId);
   const otherUserId = activeConversation?.otherUserId || activeConversation?.otherUser?.id;
@@ -150,6 +151,13 @@ export default function Chat() {
             <>
               <div className="p-6 bg-card border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setMobileConvoOpen(true)}
+                    className="md:hidden mr-2 p-2 rounded-lg bg-muted/30"
+                    aria-label="Open conversations"
+                  >
+                    <Menu className="w-5 h-5 text-foreground" />
+                  </button>
                   <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center border-2 border-card shadow-sm">
                     <User size={22} className="text-muted-foreground" />
                   </div>
@@ -197,6 +205,45 @@ export default function Chat() {
             </div>
           )}
         </div>
+
+        {mobileConvoOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/40" onClick={() => setMobileConvoOpen(false)} />
+            <div className="relative w-full max-w-sm mx-4 bg-card rounded-[20px] p-4 shadow-lg overflow-auto">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-bold text-lg">Chats</h3>
+                <button onClick={() => setMobileConvoOpen(false)} className="p-2 rounded-md">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="space-y-3">
+                {conversations?.map((chat) => (
+                  <button
+                    key={chat.id}
+                    onClick={() => {
+                      dispatch(setActiveConversation(chat.id));
+                      dispatch(fetchMessages(chat.id));
+                      setMobileConvoOpen(false);
+                    }}
+                    className={`w-full flex items-center gap-4 p-4 rounded-[18px] transition-all ${
+                      activeConversationId === chat.id
+                        ? "bg-[var(--primary)] text-white shadow-lg"
+                        : "hover:bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    <div className="w-10 h-10 rounded-full bg-muted flex-shrink-0 flex items-center justify-center border-2 border-card shadow-sm">
+                      <User size={20} className={activeConversationId === chat.id ? "text-white" : "text-muted-foreground"} />
+                    </div>
+                    <div className="text-left overflow-hidden">
+                      <p className="font-bold truncate text-[15px]">{chat.otherName || chat.otherUsername}</p>
+                      <p className="text-xs truncate opacity-70">Active Connection</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>
