@@ -10,7 +10,7 @@ import Requests from "./pages/Request";
 import Profile from "./pages/Profile";
 import UserDetail from "./pages/UserDetail";
 import Chat from "./pages/Chat";
-import { Analytics } from "@vercel/analytics/next";
+import { Analytics } from "@vercel/analytics/react";
 
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem("jwt_token");
