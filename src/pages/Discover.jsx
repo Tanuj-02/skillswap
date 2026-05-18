@@ -53,9 +53,9 @@ export default function Discover() {
   }, [searchQuery, activeTab, peers, currentUser]);
 
   if (isUserLoading || peersStatus === "loading") return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-[var(--accent)]" /></div>;
-console.log("peers:", peers);
-console.log("currentUser:", currentUser);
-console.log("filteredUsers:", filteredUsers);
+// console.log("peers:", peers);
+// console.log("currentUser:", currentUser);
+// console.log("filteredUsers:", filteredUsers);
   return (
     <div className="min-h-screen relative z-10 py-24 px-6">
       <div className="max-w-[1240px] mx-auto">

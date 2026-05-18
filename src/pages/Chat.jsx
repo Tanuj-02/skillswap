@@ -110,7 +110,7 @@ export default function Chat() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen pt-24 pb-8 px-4 md:px-10">
-      <div className="flex h-[calc(100vh-160px)] w-full max-w-6xl gap-6">
+      <div className="flex flex-col md:flex-row h-[calc(100vh-160px)] w-full max-w-6xl gap-6">
         
         {/* SIDEBAR */}
         <div className="w-80 hidden md:flex flex-col bg-card border border-border rounded-[35px] overflow-hidden shadow-sm">
