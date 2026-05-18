@@ -47,6 +47,13 @@ export default function Chat() {
     dispatch(fetchConversations());
   }, [dispatch]);
 
+  // Auto-open mobile drawer when conversations load and none is selected
+  useEffect(() => {
+    if (!activeConversationId && window.innerWidth < 768 && conversations?.length > 0) {
+      setMobileConvoOpen(true);
+    }
+  }, [conversations]);
+
   useEffect(() => {
     let interval;
     if (activeConversationId) {
@@ -113,7 +120,7 @@ export default function Chat() {
     <div className="flex flex-col items-center justify-center min-h-screen pt-24 pb-8 px-4 md:px-10">
       <div className="flex flex-col md:flex-row h-[calc(100vh-160px)] w-full max-w-6xl gap-6">
         
-        {/* SIDEBAR */}
+        {/* SIDEBAR - Desktop only */}
         <div className="w-80 hidden md:flex flex-col bg-card border border-border rounded-[35px] overflow-hidden shadow-sm">
           <div className="p-7 border-b border-border flex items-center gap-3">
             <MessageCircle className="w-6 h-6 text-[var(--primary)]" />
@@ -146,9 +153,11 @@ export default function Chat() {
           </div>
         </div>
 
+        {/* MAIN CHAT AREA */}
         <div className="flex-1 flex flex-col bg-card/60 backdrop-blur-md border border-border rounded-[35px] overflow-hidden shadow-sm relative">
           {activeConversationId ? (
             <>
+              {/* Chat Header */}
               <div className="p-6 bg-card border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <button
@@ -176,11 +185,13 @@ export default function Chat() {
                 </Button>
               </div>
 
+              {/* Messages */}
               <div className="flex-1 overflow-y-auto p-8 space-y-5 no-scrollbar">
                 {renderedMessages}
                 <div ref={scrollRef} />
               </div>
 
+              {/* Input */}
               <div className="p-6 bg-card border-t border-border">
                 <form onSubmit={handleSend} className="flex gap-3 bg-background p-2 rounded-[25px] border border-border shadow-inner">
                   <input
@@ -196,51 +207,72 @@ export default function Chat() {
               </div>
             </>
           ) : (
+            /* Empty State */
             <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-10">
               <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-6 shadow-sm border border-border">
-                 <MessageCircle size={40} className="text-[var(--primary)] opacity-30" />
+                <MessageCircle size={40} className="text-[var(--primary)] opacity-30" />
               </div>
               <h3 className="text-lg font-bold text-foreground">Your Conversations</h3>
-              <p className="text-sm max-w-[280px] text-center mt-2">Select a peer from the left to begin swapping skills and growing together.</p>
+              <p className="text-sm max-w-[280px] text-center mt-2">
+                Select a peer from the left to begin swapping skills and growing together.
+              </p>
+
+              {/* Mobile — drawer button */}
+              <button
+                onClick={() => setMobileConvoOpen(true)}
+                className="md:hidden mt-6 flex items-center gap-2 px-5 py-3 rounded-full bg-[var(--primary)] text-white text-sm font-semibold shadow-md active:scale-95 transition-transform"
+              >
+                <Menu className="w-4 h-4" />
+                View Conversations
+              </button>
             </div>
           )}
         </div>
 
+        {/* MOBILE CONVERSATION DRAWER */}
         {mobileConvoOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div className="absolute inset-0 bg-black/40" onClick={() => setMobileConvoOpen(false)} />
             <div className="relative w-full max-w-sm mx-4 bg-card rounded-[20px] p-4 shadow-lg overflow-auto">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-bold text-lg">Chats</h3>
-                <button onClick={() => setMobileConvoOpen(false)} className="p-2 rounded-md">
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="w-5 h-5 text-[var(--primary)]" />
+                  <h3 className="font-bold text-lg">Chats</h3>
+                </div>
+                <button onClick={() => setMobileConvoOpen(false)} className="p-2 rounded-md hover:bg-muted">
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <div className="space-y-3">
-                {conversations?.map((chat) => (
-                  <button
-                    key={chat.id}
-                    onClick={() => {
-                      dispatch(setActiveConversation(chat.id));
-                      dispatch(fetchMessages(chat.id));
-                      setMobileConvoOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-4 p-4 rounded-[18px] transition-all ${
-                      activeConversationId === chat.id
-                        ? "bg-[var(--primary)] text-white shadow-lg"
-                        : "hover:bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    <div className="w-10 h-10 rounded-full bg-muted flex-shrink-0 flex items-center justify-center border-2 border-card shadow-sm">
-                      <User size={20} className={activeConversationId === chat.id ? "text-white" : "text-muted-foreground"} />
-                    </div>
-                    <div className="text-left overflow-hidden">
-                      <p className="font-bold truncate text-[15px]">{chat.otherName || chat.otherUsername}</p>
-                      <p className="text-xs truncate opacity-70">Active Connection</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
+
+              {conversations?.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">No conversations yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {conversations?.map((chat) => (
+                    <button
+                      key={chat.id}
+                      onClick={() => {
+                        dispatch(setActiveConversation(chat.id));
+                        dispatch(fetchMessages(chat.id));
+                        setMobileConvoOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-4 p-4 rounded-[18px] transition-all ${
+                        activeConversationId === chat.id
+                          ? "bg-[var(--primary)] text-white shadow-lg"
+                          : "hover:bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      <div className="w-10 h-10 rounded-full bg-muted flex-shrink-0 flex items-center justify-center border-2 border-card shadow-sm">
+                        <User size={20} className={activeConversationId === chat.id ? "text-white" : "text-muted-foreground"} />
+                      </div>
+                      <div className="text-left overflow-hidden">
+                        <p className="font-bold truncate text-[15px]">{chat.otherName || chat.otherUsername}</p>
+                        <p className="text-xs truncate opacity-70">Active Connection</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
