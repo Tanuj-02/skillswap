@@ -40,7 +40,8 @@ export default function Discover() {
       const matchesSearch = String(user.name).toLowerCase().includes(q) || String(user.username).toLowerCase().includes(q) || peerCanTeach.some((s) => String(s).toLowerCase().includes(q)) || peerWantsToLearn.some((s) => String(s).toLowerCase().includes(q));
       if (!matchesSearch) return false;
 
-      const isSameCollege = user.college && currentUser?.college && user.college.toLowerCase() === currentUser.college.toLowerCase();
+      const normalize = (str) => str?.trim().toLowerCase();
+      const isSameCollege = normalize(user?.college) === normalize(currentUser?.college);
       const teachesWhatIWant = currentWantsToLearn.some(skill => peerCanTeach.includes(skill));
       const wantsWhatITeach = currentCanTeach.some(skill => peerWantsToLearn.includes(skill));
       const isMutualMatch = teachesWhatIWant && wantsWhatITeach;
