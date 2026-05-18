@@ -86,7 +86,7 @@ export default function Chat() {
           }`}>
             <p className="leading-relaxed font-medium">{msg.content}</p>
             <p className={`text-[10px] mt-1.5 opacity-60 text-right ${isMe ? "text-white" : "text-muted-foreground"}`}>
-              {new Date(msg.createdAt || msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              {new Date(msg.createdAt || msg.timestamp).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Kolkata" })}
             </p>
           </div>
         </div>
@@ -157,7 +157,6 @@ export default function Chat() {
         <div className="flex-1 flex flex-col bg-card/60 backdrop-blur-md border border-border rounded-[35px] overflow-hidden shadow-sm relative">
           {activeConversationId ? (
             <>
-              {/* Chat Header */}
               <div className="p-6 bg-card border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <button
@@ -185,13 +184,11 @@ export default function Chat() {
                 </Button>
               </div>
 
-              {/* Messages */}
               <div className="flex-1 overflow-y-auto p-8 space-y-5 no-scrollbar">
                 {renderedMessages}
                 <div ref={scrollRef} />
               </div>
 
-              {/* Input */}
               <div className="p-6 bg-card border-t border-border">
                 <form onSubmit={handleSend} className="flex gap-3 bg-background p-2 rounded-[25px] border border-border shadow-inner">
                   <input
@@ -207,7 +204,6 @@ export default function Chat() {
               </div>
             </>
           ) : (
-            /* Empty State */
             <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-10">
               <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-6 shadow-sm border border-border">
                 <MessageCircle size={40} className="text-[var(--primary)] opacity-30" />
