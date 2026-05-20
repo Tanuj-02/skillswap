@@ -79,12 +79,13 @@ export default function UserDetail() {
             </div>
           </div>
 
-          <div className="h-px bg-border w-full mb-10"></div>
+          {peer.bio && (
+            <div className="mb-10">
+              <h2 className="font-heading text-xl font-bold mb-3">About {peer.name.split(' ')[0]}</h2>
+              <p className="text-base leading-7 text-muted-foreground">{peer.bio}</p>
+            </div>
+          )}
 
-          <div className="grid md:grid-cols-2 gap-8 mb-12">
-            <div>
-              <h3 className="font-heading text-lg font-bold mb-4 flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-[var(--accent)]"></span> Can Teach</h3>
-              <div className="flex flex-wrap gap-2">
                 {peer.canTeach.map((skill, i) => <span key={i} className="px-3 py-1.5 rounded-xl border-[0.5px] bg-[var(--teach-bg)] border-[var(--teach-border)] text-[var(--teach-text)] font-semibold text-sm">{skill}</span>)}
               </div>
             </div>
