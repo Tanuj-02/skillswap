@@ -74,9 +74,9 @@ export async function sendPasswordVerification() {
 }
 
 export async function changeMyPassword(oldPassword, newPassword, verificationCode) {
-  const res = await api.put(
-    `/api/users/me/password?oldPassword=${oldPassword}&newPassword=${newPassword}&verificationCode=${verificationCode}`
-  );
+  const res = await api.put('/api/users/me/password', {
+    oldPassword, newPassword, verificationCode,
+  });
   return res.data;
 }
 

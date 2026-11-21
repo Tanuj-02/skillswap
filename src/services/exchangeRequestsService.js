@@ -5,22 +5,10 @@ export async function createExchangeRequest(payload) {
   return res.data;
 }
 
-export async function acceptExchangeRequest(id, otherUserId) {
+export async function acceptExchangeRequest(id) {
   const res = await api.put(`/api/exchange-requests/${id}/accept`);
-  try {
-    await api.post(`/api/chats`, { userId: otherUserId });
-  } catch (chatError) {
-    console.error("Exchange accepted, but chat initialization failed:", chatError);
-  }
-
   return res.data;
 }
-export const acceptSkillRequest = async (requestId, otherUserId) => {
-  await api.post(`/api/requests/${requestId}/accept`);
-  await api.post(`/api/chats`, { targetUserId: otherUserId });
-  
-  return { success: true };
-};
 
 export async function rejectExchangeRequest(id) {
   const res = await api.put(`/api/exchange-requests/${id}/reject`);

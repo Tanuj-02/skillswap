@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { X, Loader2 } from "lucide-react";
 import { verifyEmail, resendVerification } from "@/services/authService";
 
-export default function VerificationModal({ email, onVerified, onClose, title = "Verify Your Email", description, resendFunction }) {
+export default function VerificationModal({ email, onVerified, onClose, title = "Verify Your Email", description, resendFunction, verifyFunction }) {
   const [code, setCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -20,10 +20,14 @@ export default function VerificationModal({ email, onVerified, onClose, title = 
     setError("");
 
     try {
-      await verifyEmail(email, code);
-      onVerified(code);
+      if (verifyFunction) {
+        await verifyFunction(code);
+      } else {
+        await verifyEmail(email, code);
+        await onVerified(code);
+      }
     } catch (err) {
-      setError(err.response?.data?.message || "Invalid verification code");
+      setError(err.response?.data?.message || err.message || "Invalid verification code");
     } finally {
       setIsLoading(false);
     }

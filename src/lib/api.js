@@ -2,9 +2,7 @@ import axios from "axios";
 
 // Base URL: set VITE_API_URL when the API lives on another host (e.g. prod).
 // In dev, omit VITE_API_URL so requests stay same-origin — Vite proxies `/api` to the backend (see vite.config.js).
-const apiBaseURL =
-  import.meta.env.VITE_API_URL ??
-  (import.meta.env.DEV ? "" : "http://localhost:8080");
+const apiBaseURL = import.meta.env.VITE_API_URL || "";
 
 // 1. Create the Axios instance with the Base URL
 const api = axios.create({
@@ -45,6 +43,7 @@ api.interceptors.response.use(
       // If the backend says the token is invalid/expired, clear it and force login
       console.error("Session expired. Please log in again.");
       localStorage.removeItem("jwt_token");
+      window.dispatchEvent(new Event('auth:expired'));
       // window.location.href = "/login"; // Uncomment to auto-redirect to login
     }
     return Promise.reject(error);

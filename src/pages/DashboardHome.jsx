@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useUser } from "@/context/UserContext";
+import { useUser } from "@/context/userSessionContext";
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -63,8 +63,6 @@ export default function DashboardHome() {
 
                 <div className="mt-auto pt-4 border-t border-border/50">
                   {(() => {
-                    const senderId = peer.sender?.id || peer.senderid || peer.senderId;
-                    const receiverId = peer.receiver?.id || peer.receiverid || peer.receiverId;
                     const peerId = String(peer.id);
                     
                     const existingReq = connectionRequests.find(req => {

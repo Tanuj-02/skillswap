@@ -15,12 +15,12 @@ export async function login(payload) {
 }
 
 export async function verifyEmail(email, code) {
-  const res = await api.get(`/api/auth/verify-email?email=${email}&code=${code}`);
+  const res = await api.get('/api/auth/verify-email', { params: { email, code } });
   return res.data;
 }
 
 export async function resendVerification(email) {
-  const res = await api.post(`/api/auth/resend-verification?email=${email}`);
+  const res = await api.post('/api/auth/resend-verification', null, { params: { email } });
   return res.data;
 }
 

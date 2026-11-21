@@ -1,16 +1,25 @@
-# React + Vite
+# SkillSwap frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React and Vite frontend for the PeerSkillExchange backend. The source lives in this repository; the Spring Boot API lives in `Tanuj-02/peerskillexchange`.
 
-Currently, two official plugins are available:
+## Local development
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+1. Run the backend on port 8080, or set `VITE_BACKEND_URL` to its local origin.
+2. Run `npm ci` and `npm run dev`.
+3. Vite proxies `/api` to the backend. Do not put credentials in Vite environment variables; they are embedded in browser code.
 
-## React Compiler
+## Deployment configuration
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Set `VITE_API_URL` to the public backend origin **before** `npm run build`. The production client uses same-origin `/api` when this variable is absent, so a separate frontend deployment needs this setting or a hosting rewrite. There is no WebSocket client in the current frontend; chat uses REST polling. CORS and allowed origins must be configured on the backend separately.
 
-## Expanding the ESLint configuration
+## Checks
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Run `npm test`, `npm run lint`, and `npm run build`. The Node tests cover request payloads and chat message ordering. Browser and live backend checks still need a running isolated environment.
+
+## Foundation scope
+
+- Signup and login hydrate the current user before opening protected pages. A 401 clears the session.
+- Exchange requests send `canTeach` and `wantToLearn` and display the selections saved on each request. Incoming and sent requests have separate views.
+- Chat waits for a saved message before displaying it, deduplicates later poll results, ignores responses from another conversation, and restores a failed draft.
+- Password change sends the current password, new password, and verification code in a JSON request body. The paired backend now accepts this contract.
+- The paired backend allows a new request after a rejected request while preventing another active request.

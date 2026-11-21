@@ -6,9 +6,11 @@ import { ArrowLeft, Plus, CheckCircle2, Loader2 } from "lucide-react";
 import { register, login } from "@/services/authService";
 import { addSkill as addSkillAPI } from "@/services/skillsService";
 import VerificationModal from "@/components/VerificationModal";
+import { useUser } from "@/context/userSessionContext";
 
 export default function Signup() {
   const navigate = useNavigate();
+  const { refreshUserData, logout } = useUser();
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -115,18 +117,20 @@ const handleSubmit = async (e) => {
             canTeach: formData.canTeach,
             wantsToLearn: formData.wantsToLearn,
           });
-          console.log("✅ Skills saved successfully");
         } catch (skillErr) {
-          console.error("⚠️ Failed to save skills:", skillErr);
+          console.error("Failed to save skills:", skillErr);
           setError("Skills saved with errors, but account created. Check your profile.");
         }
       }
+      const user = await refreshUserData();
+      if (!user) throw new Error("Unable to load your profile after signup");
       navigate("/dashboard");
     } else {
       setError("Login failed - no token received. Please try logging in manually.");
     }
   } catch (err) {
     console.error("Verification/Login failed:", err);
+    logout();
     setError(err.response?.data?.message || "Verification successful, but login failed. Please try logging in manually.");
   } finally {
     setIsLoading(false);

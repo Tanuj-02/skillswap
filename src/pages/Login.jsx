@@ -4,11 +4,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { login } from "@/services/authService";
-import { useUser } from "@/context/UserContext";
+import { useUser } from "@/context/userSessionContext";
 
 export default function Login() {
   const navigate = useNavigate();
-  const { refreshUserData } = useUser();
+  const { refreshUserData, logout } = useUser();
   
   // Form State
   const [formData, setFormData] = useState({
@@ -34,12 +34,14 @@ export default function Login() {
       const token = data?.token;
       if (!token) throw new Error("Missing token in login response");
       localStorage.setItem("jwt_token", token);
-      refreshUserData(); 
+      const user = await refreshUserData();
+      if (!user) throw new Error("Unable to load your profile after login");
       navigate("/dashboard"); 
 
     } catch (error) {
       console.error("Login failed!", error);
-      setError(error?.response?.data?.message || error?.response?.data || "Login failed. Please check credentials.");
+      logout();
+      setError(error?.response?.data?.message || error?.message || "Login failed. Please check credentials.");
     } finally {
       setIsLoading(false);
     }

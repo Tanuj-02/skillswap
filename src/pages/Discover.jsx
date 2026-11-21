@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useUser } from "@/context/UserContext";
+import { useUser } from "@/context/userSessionContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, MapPin, Zap, Filter, ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";

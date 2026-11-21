@@ -1,4 +1,4 @@
-import { useUser } from "@/context/UserContext";
+import { useUser } from "@/context/userSessionContext";
 import { Loader2, Key, User, BookOpen, Edit3 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
@@ -47,6 +47,10 @@ export default function Profile() {
   }, [currentUser]);
 
   const handlePasswordChange = async () => {
+    if (!passwordData.oldPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+      setError("Complete all password fields");
+      return;
+    }
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       setError("New passwords don't match");
       return;
@@ -64,14 +68,15 @@ export default function Profile() {
   };
 
   const handleVerificationSuccess = async (code) => {
-    setShowVerification(false);
     try {
       await changeMyPassword(passwordData.oldPassword, passwordData.newPassword, code);
+      setShowVerification(false);
       setError("Password changed successfully");
       setPasswordData({ oldPassword: "", newPassword: "", confirmPassword: "" });
       setShowPasswordChange(false);
-    } catch {
+    } catch (error) {
       setError("Failed to change password");
+      throw error;
     }
   };
 
@@ -338,6 +343,7 @@ export default function Profile() {
           title="Verify Password Change"
           description={`We've sent a verification code to <strong>${currentUser.email}</strong> to confirm your password change.`}
           resendFunction={sendPasswordVerification}
+          verifyFunction={handleVerificationSuccess}
         />
       )}
     </div>

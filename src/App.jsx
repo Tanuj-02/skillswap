@@ -11,18 +11,22 @@ import Profile from "./pages/Profile";
 import UserDetail from "./pages/UserDetail";
 import Chat from "./pages/Chat";
 import { Analytics } from "@vercel/analytics/react";
+import { Loader2 } from "lucide-react";
+import { useUser } from "./context/userSessionContext";
 
 const ProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem("jwt_token");
-  if (!token) {
+  const { currentUser, isUserLoading } = useUser();
+  if (isUserLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin" /></div>;
+  if (!currentUser) {
     return <Navigate to="/login" replace />;
   }
   return children;
 };
 
 const PublicRoute = ({ children }) => {
-  const token = localStorage.getItem("jwt_token");
-  if (token) {
+  const { currentUser, isUserLoading } = useUser();
+  if (isUserLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin" /></div>;
+  if (currentUser) {
     return <Navigate to="/dashboard" replace />;
   }
   return children;

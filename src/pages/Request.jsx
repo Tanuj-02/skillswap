@@ -1,11 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, X, Loader2, Inbox } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { normalizeExchangeRequest } from "@/lib/exchangeRequest";
+import { useUser } from "@/context/userSessionContext";
 import {
   acceptExchangeRequest,
   rejectExchangeRequest,
   getMyReceivedExchangeRequests,
+  getMySentExchangeRequests,
 } from "@/services/exchangeRequestsService";
 
 const avatarGradients = [
@@ -15,38 +18,36 @@ const avatarGradients = [
 ];
 
 export default function Request() {
+  const { refreshUserData } = useUser();
   const [requests, setRequests] = useState([]);
+  const [sentRequests, setSentRequests] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [requestDirection, setRequestDirection] = useState("Incoming");
   const [activeTab, setActiveTab] = useState("Pending"); 
   const [processingId, setProcessingId] = useState(null);
 
-  const normalizeRequest = (req) => ({
-    ...req,
-    status: (req.status || "Pending").charAt(0).toUpperCase() + (req.status || "Pending").slice(1).toLowerCase(),
-    senderid: req.sender?.id || "",
-    senderName: req.sender?.name || "Unknown User",
-    senderUserName: req.sender?.username || "user",
-    askingSkills: req.sender?.skills?.wantsToLearn || [],
-    offeredSkills: req.sender?.skills?.canTeach || [],
-  });
+  const fetchRequests = useCallback(async () => {
+    setIsLoading(true);
+    setLoadError("");
+    try {
+      const [received, sent] = await Promise.all([
+        getMyReceivedExchangeRequests(),
+        getMySentExchangeRequests(),
+      ]);
+      setRequests((received || []).map(normalizeExchangeRequest));
+      setSentRequests((sent || []).map(normalizeExchangeRequest));
+    } catch (error) {
+      console.error("Failed to fetch requests:", error);
+      setLoadError("Could not load requests. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchRequests = async () => {
-      try {
-        const data = await getMyReceivedExchangeRequests();
-        console.log("Fetched requests:", data);
-        const normalizedData = (data || []).map(normalizeRequest);
-        console.log("Normalized requests:", normalizedData);
-        setRequests(normalizedData);
-      } catch (error) {
-        console.error("Failed to fetch requests:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchRequests();
-  }, []);
+  }, [fetchRequests]);
 
   const handleUpdateStatus = async (requestId, newStatus) => {
     setProcessingId(requestId);
@@ -61,6 +62,7 @@ export default function Request() {
       setRequests(prev => 
         prev.map(req => req.id === requestId ? { ...req, status: newStatus } : req)
       );
+      refreshUserData({ silent: true });
     } catch (error) {
       console.error(`Failed to ${newStatus} request:`, error);
       alert("Something went wrong. Please try again.");
@@ -73,7 +75,8 @@ export default function Request() {
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-[var(--accent)]" /></div>;
   }
 
-  const filteredRequests = requests.filter(req => {
+  const displayedRequests = requestDirection === "Incoming" ? requests : sentRequests;
+  const filteredRequests = displayedRequests.filter(req => {
     const reqStatus = req.status ? req.status.toLowerCase() : "pending";
     return reqStatus === activeTab.toLowerCase();
   });
@@ -87,14 +90,23 @@ export default function Request() {
             Connection <em className="not-italic text-[var(--accent)]">Requests</em>
           </h1>
           <p className="text-muted-foreground mt-2 font-light">
-            Review your incoming skill swap proposals and manage your connections.
+            Review proposals you received and track the ones you sent.
           </p>
+        </div>
+
+        {loadError && <div role="alert" className="mb-6 text-sm text-destructive">{loadError} <button className="underline" onClick={fetchRequests}>Retry</button></div>}
+
+        <div className="flex gap-2 mb-6" aria-label="Request direction">
+          {["Incoming", "Sent"].map(direction => (
+            <Button key={direction} variant={requestDirection === direction ? 'default' : 'outline'} onClick={() => { setRequestDirection(direction); setActiveTab('Pending'); }}>
+              {direction}
+            </Button>
+          ))}
         </div>
 
         <div className="flex gap-2 mb-8 border-b border-border pb-px">
           {["Pending", "Accepted", "Rejected"].map(tab => {
-            // Safe pending count check
-            const pendingCount = requests.filter(r => (r.status ? r.status.toLowerCase() : "pending") === "pending").length;
+            const pendingCount = displayedRequests.filter(r => r.status?.toLowerCase() === "pending").length;
             
             return (
               <button
@@ -127,7 +139,7 @@ export default function Request() {
                   <Inbox className="w-8 h-8" />
                 </div>
                 <h3 className="text-xl font-heading font-bold mb-2">No {activeTab.toLowerCase()} requests</h3>
-                <p className="text-muted-foreground text-sm">When someone wants to swap skills with you, it will appear here.</p>
+                <p className="text-muted-foreground text-sm">{requestDirection === 'Incoming' ? 'When someone wants to swap skills with you, it will appear here.' : 'Requests you send will appear here.'}</p>
               </motion.div>
             ) : (
               filteredRequests.map((req, i) => (
@@ -143,14 +155,14 @@ export default function Request() {
                     
                     <div className="flex gap-4 flex-1">
                       {/* 🔥 EXTREME SAFETY AVATAR */}
-                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-heading text-lg font-extrabold text-white shadow-md bg-gradient-to-br ${avatarGradients[req.senderid ? req.senderid.charCodeAt(0) % avatarGradients.length : 0]}`}>
-                        {req.senderName ? req.senderName.split(' ').map(n => n[0]).join('').substring(0,2) : 'U'}
+                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-heading text-lg font-extrabold text-white shadow-md bg-gradient-to-br ${avatarGradients[requestDirection === 'Incoming' ? (req.senderid?.charCodeAt(0) || 0) % avatarGradients.length : (req.receiverid?.charCodeAt(0) || 0) % avatarGradients.length]}`}>
+                        {(requestDirection === 'Incoming' ? req.senderName : req.receiverName).split(' ').map(n => n[0]).join('').substring(0,2)}
                       </div>
                       
                       <div className="flex-1">
                         <div className="flex items-baseline gap-2 mb-1">
-                          <h3 className="font-heading text-lg font-bold text-foreground">{req.senderName || "Unknown User"}</h3>
-                          <span className="text-xs text-muted-foreground">@{req.senderUserName || "user"}</span>
+                          <h3 className="font-heading text-lg font-bold text-foreground">{requestDirection === 'Incoming' ? req.senderName : req.receiverName}</h3>
+                          <span className="text-xs text-muted-foreground">@{requestDirection === 'Incoming' ? req.senderUserName : req.receiverUserName}</span>
                         </div>
                         
                         <div className="flex flex-wrap items-center gap-2 mb-3 text-sm">
@@ -170,7 +182,7 @@ export default function Request() {
                       </div>
                     </div>
 
-                    {activeTab === "Pending" && (
+                    {requestDirection === 'Incoming' && activeTab === "Pending" && (
                       <div className="flex md:flex-col gap-3 shrink-0 mt-4 md:mt-0">
                         <Button 
                           onClick={() => handleUpdateStatus(req.id, "Accepted")}
@@ -190,7 +202,7 @@ export default function Request() {
                       </div>
                     )}
 
-                    {activeTab !== "Pending" && (
+                    {(requestDirection === 'Sent' || activeTab !== "Pending") && (
                       <div className="shrink-0 flex items-center justify-center px-4 py-2 rounded-xl bg-surface2 border border-border mt-4 md:mt-0">
                         <span className={`text-sm font-bold ${activeTab === 'Accepted' ? 'text-[var(--learn-text)]' : 'text-muted-foreground'}`}>
                           {activeTab}

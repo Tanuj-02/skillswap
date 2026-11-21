@@ -23,7 +23,12 @@ export default defineConfig([
       },
     },
     rules: {
-      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      // Core ESLint cannot detect `motion.div` as a JSX use of `motion`.
+      'no-unused-vars': ['error', { varsIgnorePattern: '^(motion$|[A-Z_])' }],
     },
+  },
+  {
+    files: ['vite.config.js', 'src/lib/*.test.js'],
+    languageOptions: { globals: globals.node },
   },
 ])

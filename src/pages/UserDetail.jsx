@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useUser } from "@/context/UserContext";
+import { useUser } from "@/context/userSessionContext";
 import { motion } from "framer-motion";
 import { ArrowLeft, MapPin, Zap, ArrowRight, Loader2, GraduationCap, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -52,7 +52,6 @@ export default function UserDetail() {
   if (isUserLoading || isLoadingPeer) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-[var(--accent)]" /></div>;
   if (!peer) return <div className="min-h-screen flex items-center justify-center text-xl font-heading">User not found</div>;
 
-  const isSameCollege = peer.college && currentUser?.college && peer.college.toLowerCase() === currentUser.college.toLowerCase();
   const teachesWhatIWant = currentUser?.wantsToLearn.some(skill => peer.canTeach.includes(skill));
   const wantsWhatITeach = currentUser?.canTeach.some(skill => peer.wantsToLearn.includes(skill));
   const isMutualMatch = teachesWhatIWant && wantsWhatITeach;

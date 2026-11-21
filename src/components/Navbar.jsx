@@ -1,4 +1,4 @@
-import { Link, useNavigate, useLocation } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import {
   Menu,
@@ -8,9 +8,10 @@ import {
   User,
   LogOut
 } from "lucide-react"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useTheme } from "next-themes"
+import { useUser } from "@/context/userSessionContext"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,20 +21,16 @@ import {
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
-  const { theme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
+  const { resolvedTheme, setTheme } = useTheme()
+  const { currentUser, logout } = useUser()
   
   const navigate = useNavigate()
-  const location = useLocation()
 
-  useEffect(() => setMounted(true), [])
-
-  // 1. REAL AUTH CHECK: Check if the token exists in localStorage
-  const isLoggedIn = !!localStorage.getItem("jwt_token")
+  const isLoggedIn = Boolean(currentUser)
 
   // 2. LOGOUT LOGIC: Clear token and redirect
   const handleLogout = () => {
-    localStorage.removeItem("jwt_token")
+    logout()
     setIsOpen(false) // Close mobile menu if open
     navigate("/login")
   }
@@ -67,17 +64,15 @@ export default function Navbar() {
             </>
           )}
 
-          {mounted && (
-            <motion.button
+          <motion.button
               whileTap={{ scale: 0.85 }}
               onClick={() =>
-                setTheme(theme === "dark" ? "light" : "dark")
+                setTheme(resolvedTheme === "dark" ? "light" : "dark")
               }
               className="p-2 rounded-md hover:bg-muted transition"
             >
-              {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+              {resolvedTheme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
             </motion.button>
-          )}
 
           {/* Auth Section */}
           {!isLoggedIn ? (
@@ -169,18 +164,16 @@ export default function Navbar() {
               </div>
             )}
 
-            {mounted && (
               <button
                 onClick={() => {
-                  setTheme(theme === "dark" ? "light" : "dark")
+                  setTheme(resolvedTheme === "dark" ? "light" : "dark")
                   setIsOpen(false)
                 }}
                 className="flex items-center gap-2 text-sm p-2 rounded-md hover:bg-muted w-full"
               >
-                {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+                {resolvedTheme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
                 Toggle Theme
               </button>
-            )}
 
             <div className="pt-2 flex flex-col gap-3">
               {!isLoggedIn ? (

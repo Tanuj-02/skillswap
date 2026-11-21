@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import api from "@/lib/api"; 
+import { mergeMessages, shouldApplyMessages } from "@/lib/chatMessages";
 
 export const fetchConversations = createAsyncThunk(
   "chat/fetchConversations",
@@ -20,7 +21,7 @@ export const postMessage = createAsyncThunk(
       const response = await api.post(`/api/chats/${conversationId}/messages`, {
         content: content
       });
-      return response.data; // Should return the saved message object
+      return { conversationId, message: response.data };
     } catch (err) {
       return rejectWithValue(err?.response?.data || "Failed to send message");
     }
@@ -51,10 +52,8 @@ const chatSlice = createSlice({
   reducers: {
     setActiveConversation(state, action) {
       state.activeConversationId = action.payload;
-    },
-    // Optimistically add a message to the UI before it hits the DB
-    appendMessage(state, action) {
-      state.messages.push(action.payload);
+      state.messages = [];
+      state.error = null;
     },
   },
   extraReducers: (builder) => {
@@ -74,15 +73,21 @@ const chatSlice = createSlice({
         state.status = "loading";
       })
       .addCase(fetchMessages.fulfilled, (state, action) => {
+        if (!shouldApplyMessages(state.activeConversationId, action.payload.conversationId)) return;
         state.status = "succeeded";
-        state.messages = action.payload.messages;
+        state.messages = mergeMessages(state.messages, action.payload.messages);
       })
       .addCase(fetchMessages.rejected, (state, action) => {
+        if (!shouldApplyMessages(state.activeConversationId, action.meta.arg)) return;
         state.status = "failed";
         state.error = action.payload;
+      })
+      .addCase(postMessage.fulfilled, (state, action) => {
+        if (!shouldApplyMessages(state.activeConversationId, action.payload.conversationId)) return;
+        state.messages = mergeMessages(state.messages, [action.payload.message]);
       });
   },
 });
 
-export const { setActiveConversation, appendMessage } = chatSlice.actions;
+export const { setActiveConversation } = chatSlice.actions;
 export default chatSlice.reducer;

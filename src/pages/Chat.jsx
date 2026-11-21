@@ -4,8 +4,7 @@ import {
   fetchConversations, 
   fetchMessages, 
   setActiveConversation, 
-  postMessage, 
-  appendMessage 
+  postMessage,
 } from "@/store/slices/chatSlice";
 import { fetchCurrentUser } from "@/store/slices/userSlice";
 import { Button } from "@/components/ui/button";
@@ -16,11 +15,15 @@ export default function Chat() {
   const dispatch = useDispatch();
   const scrollRef = useRef(null);
   
-  const { messages, conversations, activeConversationId, status } = useSelector((state) => state.chat);
+  const { messages, conversations, activeConversationId } = useSelector((state) => state.chat);
   const { currentUser } = useSelector((state) => state.user);
   const [draft, setDraft] = useState("");
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const [mobileConvoOpen, setMobileConvoOpen] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [sendError, setSendError] = useState("");
+  const activeIdRef = useRef(activeConversationId);
+  activeIdRef.current = activeConversationId;
 
   const activeConversation = conversations?.find(c => c.id === activeConversationId);
   const otherUserId = activeConversation?.otherUserId || activeConversation?.otherUser?.id;
@@ -52,7 +55,7 @@ export default function Chat() {
     if (!activeConversationId && window.innerWidth < 768 && conversations?.length > 0) {
       setMobileConvoOpen(true);
     }
-  }, [conversations]);
+  }, [activeConversationId, conversations]);
 
   useEffect(() => {
     let interval;
@@ -78,7 +81,7 @@ export default function Chat() {
       const isMe = msg.senderId === currentUser?.id || msg.senderUsername === currentUser?.username;
       
       return (
-        <div key={msg.id || Math.random()} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
+        <div key={msg.id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
           <div className={`max-w-[70%] p-3 px-5 rounded-[22px] text-sm shadow-sm ${
             isMe 
               ? "bg-[var(--primary)] text-white rounded-tr-none" 
@@ -96,24 +99,31 @@ export default function Chat() {
 
   const handleSend = async (e) => {
     e.preventDefault();
-    if (!draft.trim() || !activeConversationId) return;
+    if (!draft.trim() || !activeConversationId || isSending) return;
 
     const messageText = draft.trim();
+    const conversationId = activeConversationId;
     setDraft("");
-
-    dispatch(appendMessage({
-      id: Date.now(),
-      senderId: currentUser?.id,
-      senderUsername: currentUser?.username,
-      content: messageText,
-      createdAt: new Date().toISOString(),
-    }));
+    setSendError("");
+    setIsSending(true);
 
     try {
-      await dispatch(postMessage({ conversationId: activeConversationId, content: messageText })).unwrap();
+      await dispatch(postMessage({ conversationId, content: messageText })).unwrap();
     } catch (error) {
       console.error("Failed to send:", error);
+      if (String(activeIdRef.current) === String(conversationId)) {
+        setDraft((current) => current || messageText);
+        setSendError("Message was not sent. Please try again.");
+      }
+    } finally {
+      setIsSending(false);
     }
+  };
+
+  const selectConversation = (id) => {
+    setDraft("");
+    setSendError("");
+    dispatch(setActiveConversation(id));
   };
 
   return (
@@ -132,8 +142,7 @@ export default function Chat() {
               <button
                 key={chat.id}
                 onClick={() => {
-                  dispatch(setActiveConversation(chat.id));
-                  dispatch(fetchMessages(chat.id));
+                  selectConversation(chat.id);
                 }}
                 className={`w-full flex items-center gap-4 p-4 rounded-[28px] transition-all ${
                   activeConversationId === chat.id 
@@ -190,6 +199,7 @@ export default function Chat() {
               </div>
 
               <div className="p-6 bg-card border-t border-border">
+                {sendError && <p role="alert" className="text-sm text-destructive mb-2">{sendError}</p>}
                 <form onSubmit={handleSend} className="flex gap-3 bg-background p-2 rounded-[25px] border border-border shadow-inner">
                   <input
                     value={draft}
@@ -197,8 +207,8 @@ export default function Chat() {
                     placeholder="Type a message..."
                     className="flex-1 bg-transparent px-5 outline-none text-sm text-foreground"
                   />
-                  <Button type="submit" size="icon" className="rounded-full h-12 w-12 bg-[var(--primary)] hover:bg-[var(--primary)]/90 transition-transform active:scale-95 shadow-md">
-                    <Send size={18} className="text-white" />
+                  <Button type="submit" size="icon" disabled={isSending || !draft.trim()} className="rounded-full h-12 w-12 bg-[var(--primary)] hover:bg-[var(--primary)]/90 transition-transform active:scale-95 shadow-md">
+                    {isSending ? <Loader2 size={18} className="animate-spin text-white" /> : <Send size={18} className="text-white" />}
                   </Button>
                 </form>
               </div>
@@ -248,8 +258,7 @@ export default function Chat() {
                     <button
                       key={chat.id}
                       onClick={() => {
-                        dispatch(setActiveConversation(chat.id));
-                        dispatch(fetchMessages(chat.id));
+                        selectConversation(chat.id);
                         setMobileConvoOpen(false);
                       }}
                       className={`w-full flex items-center gap-4 p-4 rounded-[18px] transition-all ${

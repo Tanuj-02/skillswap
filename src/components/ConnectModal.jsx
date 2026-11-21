@@ -3,8 +3,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Sparkles, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createExchangeRequest } from "@/services/exchangeRequestsService";
+import { serializeExchangeRequest } from "@/lib/exchangeRequest";
+import { useUser } from "@/context/userSessionContext";
 
 export default function ConnectModal({ isOpen, onClose, targetUser, currentUser }) {
+  const { refreshUserData } = useUser();
   const [selectedLearn, setSelectedLearn] = useState("");
   const [selectedTeach, setSelectedTeach] = useState("");
   const [message, setMessage] = useState("");
@@ -37,26 +40,22 @@ export default function ConnectModal({ isOpen, onClose, targetUser, currentUser 
     setError("");
 
     try {
-      await createExchangeRequest({
-        senderId: currentUser.id,
-        senderName: currentUser.name,
-        senderUserName: currentUser.username,
+      await createExchangeRequest(serializeExchangeRequest({
         receiverId: targetUser.id,
-        receiverName: targetUser.name,
-        receiverUserName: targetUser.username,
         message: message,
-        offeredSkills: [selectedTeach],
-        askingSkills: [selectedLearn],
-      });
+        selectedTeach,
+        selectedLearn,
+      }));
 
       setIsSuccess(true);
       setTimeout(() => {
         if (onClose) onClose();
+        refreshUserData({ silent: true });
       }, 2000);
 
     } catch (err) {
       console.error("Failed to send request:", err);
-      setError("Failed to send request. Please try again.");
+      setError(err.response?.data?.message || err.message || "Failed to send request. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -130,7 +129,7 @@ export default function ConnectModal({ isOpen, onClose, targetUser, currentUser 
 
                 <div className="px-6 py-5 border-t border-border bg-surface2/30 flex justify-end gap-3">
                   <Button variant="outline" onClick={onClose} className="h-11 px-6 rounded-xl border-border hover:bg-card">Cancel</Button>
-                  <Button onClick={handleSend} disabled={isSubmitting || !message.trim()} className="h-11 px-6 bg-foreground text-background hover:bg-foreground/90 rounded-xl font-bold shadow-lg min-w-[120px]">
+                  <Button onClick={handleSend} disabled={isSubmitting || !message.trim() || !selectedTeach || !selectedLearn} className="h-11 px-6 bg-foreground text-background hover:bg-foreground/90 rounded-xl font-bold shadow-lg min-w-[120px]">
                     {isSubmitting ? <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }} className="w-4 h-4 border-2 border-background border-t-transparent rounded-full" /> : <>Send Request <Send className="w-4 h-4 ml-2" /></>}
                   </Button>
                 </div>
