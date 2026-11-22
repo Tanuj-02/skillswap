@@ -10,6 +10,8 @@ import Requests from "./pages/Request";
 import Profile from "./pages/Profile";
 import UserDetail from "./pages/UserDetail";
 import Chat from "./pages/Chat";
+import Rooms from "./pages/Rooms";
+import WhiteboardRoom from "./pages/WhiteboardRoom";
 import { Analytics } from "@vercel/analytics/react";
 import { Loader2 } from "lucide-react";
 import { useUser } from "./context/userSessionContext";
@@ -72,6 +74,8 @@ export default function App() {
             <Chat />
           </ProtectedRoute>
         } />
+        <Route path="/rooms" element={<ProtectedRoute><Rooms /></ProtectedRoute>} />
+        <Route path="/rooms/:roomId" element={<ProtectedRoute><WhiteboardRoom /></ProtectedRoute>} />
         <Route path="/profile" element={
           <ProtectedRoute>
             <Profile />

@@ -10,11 +10,15 @@ React and Vite frontend for the PeerSkillExchange backend. The source lives in t
 
 ## Deployment configuration
 
-Set `VITE_API_URL` to the public backend origin **before** `npm run build`. The production client uses same-origin `/api` when this variable is absent, so a separate frontend deployment needs this setting or a hosting rewrite. There is no WebSocket client in the current frontend; chat uses REST polling. CORS and allowed origins must be configured on the backend separately.
+Set `VITE_API_URL` to the public backend origin **before** `npm run build`. The production client uses same-origin `/api` when this variable is absent, so a separate frontend deployment needs this setting or a hosting rewrite. Whiteboard rooms use `/ws/websocket` for live events; the reverse proxy must forward WebSocket upgrades. Chat still uses REST polling. CORS and allowed origins must be configured on the backend separately.
 
 ## Checks
 
-Run `npm test`, `npm run lint`, and `npm run build`. The Node tests cover request payloads and chat message ordering. Browser and live backend checks still need a running isolated environment.
+Run `npm test`, `npm run lint`, and `npm run build`. The Node tests cover request payloads, chat message ordering, and whiteboard projection replay. Browser and live backend checks still need a running isolated environment.
+
+## Live whiteboard recovery
+
+The room page loads the versioned board projection from `GET /api/rooms/{id}/board`, then fetches operations after that sequence before opening the live socket. Reconnects catch up from the last contiguous sequence and deduplicate operation IDs. During an API 503 recovery response, drawing is disabled and the page retries. An uncertain save retains its UUID so the **Retry pending change** button is idempotent. The backend's Kafka and Redis setup is documented in `docs/redis-kafka-whiteboard.md` in the API repository.
 
 ## Foundation scope
 

@@ -61,6 +61,9 @@ export default function Navbar() {
               <Link to="/chat" className="text-sm hover:text-primary transition">
                 Chat
               </Link>
+              <Link to="/rooms" className="text-sm hover:text-primary transition">
+                Whiteboard
+              </Link>
             </>
           )}
 
@@ -146,6 +149,9 @@ export default function Navbar() {
                   className="text-sm font-medium p-2 rounded-md hover:bg-muted"
                 >
                   Requests
+                </Link>
+                <Link to="/rooms" onClick={() => setIsOpen(false)} className="text-sm font-medium p-2 rounded-md hover:bg-muted">
+                  Whiteboard
                 </Link>
                 <Link
                   to="/chat"
