@@ -6,6 +6,7 @@ import { useUser } from '@/context/userSessionContext';
 import { appendBoardOperation, closeRoom, getBoardHistory, getBoardProjection, getRoom, joinRoom } from '@/services/roomService';
 import { connectRoomSocket } from '@/services/roomSocket';
 import { contiguousSequence, mergeBoardOperations, visibleStrokes } from '@/lib/whiteboard';
+import AiSessionPanel from '@/components/AiSessionPanel';
 
 function describeError(error) {
   if (error?.response?.status === 403) return 'You no longer have access to this room.';
@@ -343,6 +344,7 @@ export default function WhiteboardRoom() {
             </div>}
           </aside>
         </div>}
+      {room?.status === 'CLOSED' && <AiSessionPanel roomId={roomId} />}
     </div>
   </main>;
 }

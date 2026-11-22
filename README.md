@@ -27,3 +27,7 @@ The room page loads the versioned board projection from `GET /api/rooms/{id}/boa
 - Chat waits for a saved message before displaying it, deduplicates later poll results, ignores responses from another conversation, and restores a failed draft.
 - Password change sends the current password, new password, and verification code in a JSON request body. The paired backend now accepts this contract.
 - The paired backend allows a new request after a rejected request while preventing another active request.
+
+## AI notes for closed rooms
+
+Open a closed learning room from **Learning rooms** to review its saved board and request AI-generated learning notes. The panel polls while the separate backend worker runs, displays a summary and three practice questions, and permits a report or a limited regeneration. Configure `GROQ_API_KEY` on the backend worker, not in Vite or browser environment variables. See the backend `docs/ai-session-summary.md` for API and worker setup.
