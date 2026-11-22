@@ -62,7 +62,7 @@ export default function Navbar() {
                 Chat
               </Link>
               <Link to="/rooms" className="text-sm hover:text-primary transition">
-                Whiteboard
+                Live rooms
               </Link>
             </>
           )}
@@ -151,7 +151,7 @@ export default function Navbar() {
                   Requests
                 </Link>
                 <Link to="/rooms" onClick={() => setIsOpen(false)} className="text-sm font-medium p-2 rounded-md hover:bg-muted">
-                  Whiteboard
+                  Live rooms
                 </Link>
                 <Link
                   to="/chat"

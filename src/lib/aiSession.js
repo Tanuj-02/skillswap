@@ -8,10 +8,12 @@ export function aiJobPhase(job) {
   return 'invalid';
 }
 
-export function aiErrorMessage(error) {
+export function aiErrorMessage(error, callId) {
   const status = error?.response?.status;
   if (status === 403) return 'You do not have access to this session.';
-  if (status === 429) return 'This room has reached its AI generation limit.';
-  if (status === 409) return 'Close the room first, or wait for the current request to finish.';
+  if (status === 429) return `This ${callId ? 'call' : 'room'} has reached its AI generation limit.`;
+  if (status === 409) return callId
+    ? 'End the call and save notes before generating, or wait for the current request to finish.'
+    : 'Close the room first, or wait for the current request to finish.';
   return 'AI notes are unavailable right now. Please retry.';
 }

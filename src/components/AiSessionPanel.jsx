@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { aiErrorMessage, aiJobPhase } from '@/lib/aiSession';
 import { latestAiJob, reportAiJob, requestAiJob } from '@/services/aiSessionService';
 
-export default function AiSessionPanel({ roomId }) {
+export default function AiSessionPanel({ roomId, callId }) {
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -15,11 +15,11 @@ export default function AiSessionPanel({ roomId }) {
 
   const refresh = useCallback(async () => {
     try {
-      setJob(await latestAiJob(roomId));
+      setJob(await latestAiJob(roomId, callId));
       setError('');
-    } catch (failure) { setError(aiErrorMessage(failure)); }
+    } catch (failure) { setError(aiErrorMessage(failure, callId)); }
     finally { setLoading(false); }
-  }, [roomId]);
+  }, [roomId, callId]);
 
   useEffect(() => { refresh(); }, [refresh]);
   useEffect(() => {
@@ -32,10 +32,10 @@ export default function AiSessionPanel({ roomId }) {
     setSending(true); setError('');
     requestIdRef.current ||= crypto.randomUUID();
     try {
-      const next = await requestAiJob(roomId, requestIdRef.current);
+      const next = await requestAiJob(roomId, requestIdRef.current, callId);
       setJob(next); setReported(false); requestIdRef.current = null;
     } catch (failure) {
-      setError(aiErrorMessage(failure));
+      setError(aiErrorMessage(failure, callId));
       if (failure?.response?.status === 409) refresh();
       if ([403, 409, 429].includes(failure?.response?.status)) requestIdRef.current = null;
     } finally { setSending(false); }
@@ -45,12 +45,12 @@ export default function AiSessionPanel({ roomId }) {
     try {
       await reportAiJob(roomId, job.id, 'UNHELPFUL');
       setReported(true); setError('');
-    } catch (failure) { setError(aiErrorMessage(failure)); }
+    } catch (failure) { setError(aiErrorMessage(failure, callId)); }
   };
 
   return <section className="mt-5 rounded-2xl border border-border bg-card/80 p-5" aria-label="AI learning notes">
-    <h2 className="flex items-center gap-2 font-bold"><Sparkles className="w-5 h-5" /> AI learning notes</h2>
-    <p className="text-sm text-muted-foreground mt-1 mb-4">Your exchange skills and session chat excerpts are sent to Groq. AI results can be wrong; check them before relying on them.</p>
+    <h2 className="flex items-center gap-2 font-bold"><Sparkles className="w-5 h-5" /> {callId ? 'AI call summary' : 'AI learning notes'}</h2>
+    <p className="text-sm text-muted-foreground mt-1 mb-4">{callId ? 'Notes and captions saved during this call are sent to Groq. The summary covers only that material, not unheard speech.' : 'Your exchange skills and session chat excerpts are sent to Groq.'} AI results can be wrong; check them before relying on them.</p>
     {error && <p role="alert" className="text-sm text-destructive mb-3">{error}</p>}
     {loading ? <p className="text-sm"><Loader2 className="w-4 h-4 inline animate-spin" /> Loading notes…</p> : <>
       {phase === 'empty' && <p className="text-sm mb-3">No AI notes yet.</p>}

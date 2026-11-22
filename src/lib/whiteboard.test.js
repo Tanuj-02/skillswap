@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mergeBoardOperations, visibleStrokes, contiguousSequence } from './whiteboard.js';
+import { mergeBoardOperations, visibleStrokes, contiguousSequence, sampleStrokePoints } from './whiteboard.js';
 
 const stroke = (sequenceNumber, operationId) => ({
   sequenceNumber, operationId, type: 'STROKE', points: [{ x: 0, y: 0 }, { x: 1, y: 1 }],
@@ -40,4 +40,21 @@ test('applies tail events over snapshot strokes', () => {
     stroke(4, 'c'),
   ];
   assert.deepEqual(visibleStrokes(tail, seed).map(op => op.operationId), ['b', 'c']);
+});
+
+test('keeps shapes and text through reload and erases either item', () => {
+  const seed = [
+    { sequenceNumber: 1, operationId: 'rectangle', type: 'SHAPE', shape: 'RECTANGLE' },
+    { sequenceNumber: 2, operationId: 'caption', type: 'TEXT', text: 'A concept' },
+  ];
+  const tail = [{ sequenceNumber: 3, operationId: 'erase', type: 'ERASE', targetOperationId: 'rectangle' }];
+  assert.deepEqual(visibleStrokes(tail, seed).map(item => item.operationId), ['caption']);
+});
+
+test('samples a long stroke without losing its endpoint', () => {
+  const points = Array.from({ length: 400 }, (_, index) => ({ x: index / 399, y: 0.5 }));
+  const sampled = sampleStrokePoints(points);
+  assert.equal(sampled.length, 256);
+  assert.deepEqual(sampled[0], points[0]);
+  assert.deepEqual(sampled.at(-1), points.at(-1));
 });

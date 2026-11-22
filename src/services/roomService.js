@@ -25,6 +25,11 @@ export async function closeRoom(roomId) {
   return response.data;
 }
 
+export async function reopenRoom(roomId) {
+  const response = await api.post(`/api/rooms/${roomId}/reopen`);
+  return response.data;
+}
+
 export async function getBoardHistory(roomId, after = 0) {
   const response = await api.get(`/api/rooms/${roomId}/operations`, { params: { after } });
   return response.data;

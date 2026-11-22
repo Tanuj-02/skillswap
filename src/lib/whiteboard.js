@@ -21,9 +21,15 @@ export function visibleStrokes(operations, seed = []) {
   const strokes = new Map();
   for (const stroke of seed) strokes.set(stroke.operationId, stroke);
   for (const operation of [...operations].sort((a, b) => a.sequenceNumber - b.sequenceNumber)) {
-    if (operation.type === 'STROKE') strokes.set(operation.operationId, operation);
+    if (['STROKE', 'SHAPE', 'TEXT'].includes(operation.type)) strokes.set(operation.operationId, operation);
     if (operation.type === 'ERASE') strokes.delete(operation.targetOperationId);
     if (operation.type === 'CLEAR') strokes.clear();
   }
   return [...strokes.values()];
+}
+
+export function sampleStrokePoints(points, limit = 256) {
+  if (points.length <= limit) return points;
+  return Array.from({ length: limit }, (_, index) =>
+    points[Math.round(index * (points.length - 1) / (limit - 1))]);
 }

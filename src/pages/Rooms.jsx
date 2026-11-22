@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowRight, Loader2, Plus, RefreshCw, Users } from 'lucide-react';
+import { ArrowRight, Loader2, Plus, RefreshCw, RotateCcw, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getMyReceivedExchangeRequests, getMySentExchangeRequests } from '@/services/exchangeRequestsService';
-import { createRoom, listRooms } from '@/services/roomService';
+import { createRoom, listRooms, reopenRoom } from '@/services/roomService';
+import { useUser } from '@/context/userSessionContext';
 
 export default function Rooms() {
   const navigate = useNavigate();
+  const { currentUser } = useUser();
   const [rooms, setRooms] = useState([]);
   const [exchanges, setExchanges] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -49,13 +51,28 @@ export default function Rooms() {
     }
   };
 
+  const restart = async (roomId) => {
+    setCreating(roomId);
+    setError('');
+    try {
+      await reopenRoom(roomId);
+      navigate(`/rooms/${roomId}`);
+    } catch (failure) {
+      setError(failure.response?.status === 403
+        ? 'Only the room owner can restart an accepted exchange room.'
+        : 'The room could not be restarted. Refresh and try again.');
+    } finally {
+      setCreating(null);
+    }
+  };
+
   return <main className="min-h-screen pt-24 pb-16 px-4 md:px-8 text-foreground">
     <div className="max-w-5xl mx-auto">
       <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
         <div>
           <p className="text-sm font-semibold text-[var(--accent)] mb-2">Learn together</p>
-          <h1 className="font-heading text-4xl font-extrabold">Learning rooms</h1>
-          <p className="text-muted-foreground mt-2">Draw and explain ideas with an accepted skill exchange partner.</p>
+          <h1 className="font-heading text-4xl font-extrabold">Video learning rooms</h1>
+          <p className="text-muted-foreground mt-2">Talk, share your screen, and work on a board with an accepted skill exchange partner.</p>
         </div>
         <Button variant="outline" onClick={load} disabled={loading}><RefreshCw className="w-4 h-4 mr-2" /> Refresh</Button>
       </div>
@@ -67,8 +84,11 @@ export default function Rooms() {
             <div className="grid sm:grid-cols-2 gap-4">{rooms.map(room =>
               <div key={room.id} className="rounded-2xl border border-border bg-card/70 p-5 flex items-center justify-between gap-4">
                 <div><div className="flex items-center gap-2 font-semibold"><Users className="w-4 h-4" /> {room.ownerName} and {room.peerName}</div>
-                  <p className="text-sm text-muted-foreground mt-1">{room.status === 'OPEN' ? 'Live board available' : 'Room closed'} · {room.latestSequence} saved updates</p></div>
-                <Link to={`/rooms/${room.id}`}><Button size="sm">{room.status === 'OPEN' ? 'Open' : 'Review'} <ArrowRight className="w-4 h-4 ml-2" /></Button></Link>
+                  <p className="text-sm text-muted-foreground mt-1">{room.status === 'OPEN' ? 'Video call and board available' : 'Room closed'} · {room.latestSequence} saved updates</p></div>
+                <div className="flex flex-wrap gap-2">
+                  {room.status === 'CLOSED' && room.ownerId === currentUser?.id && <Button size="sm" onClick={() => restart(room.id)} disabled={creating !== null}><RotateCcw className="w-4 h-4 mr-1" /> Restart</Button>}
+                  <Link to={`/rooms/${room.id}`}><Button size="sm" variant={room.status === 'CLOSED' ? 'outline' : 'default'}>{room.status === 'OPEN' ? 'Open' : 'Review'} <ArrowRight className="w-4 h-4 ml-2" /></Button></Link>
+                </div>
               </div>)}</div>}
         </section>
         <section>
